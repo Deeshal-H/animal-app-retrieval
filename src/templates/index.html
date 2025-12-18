@@ -6,12 +6,22 @@
     <title>Document</title>
 </head>
 <body>
-    <h3>Animal Image Retrieval</h3>
-    <form action="/" method="POST">
-        <input type="submit" value="Show me a cat">
+    <h2>Animal Image Retrieval</h2>
+
+    <h3>Please select an animal</h3>
+    <form method="POST">
+        <select name="animal" id="animal" required>
+            <option value="">-- Choose an option --</option>
+            <option value="dog">Dog</option>
+            <option value="duck">Duck</option>
+            <option value="fox">Fox</option>
+        </select>
+        <button type="submit">Retrieve image</button>
     </form>
-    {% if started %}
-        <h4>Process started...</h4>
+    {% if complete %}
+        <h4>The process has been initiated. Please proceed to the Tasklist UI in Camunda to view the Camunda Form with the image.</h4>
+        <p>As a preview, below is the image retrieved:</p>
+        <img src={{ animal_url }} alt="Animal" />
     {% endif %}
 </body>
 </html>
