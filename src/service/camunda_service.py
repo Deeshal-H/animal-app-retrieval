@@ -1,8 +1,7 @@
-import requests
 from urllib.parse import urlencode
 import json
-import os
 import logging
+import requests
 
 REQUEST_HEADERS = {
     "Content-Type": "application/json",
@@ -148,7 +147,8 @@ class CamundaService:
         
         except requests.exceptions.RequestException as exception:
             logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
-    
+
+
     def activate_jobs(self, service_task_job_type: str, timeout: int, max_jobs_to_activate: int):
 
         request_url = f"{self.base_url}/v2/jobs/activation"
@@ -176,6 +176,7 @@ class CamundaService:
         except requests.exceptions.RequestException as exception:
             logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
 
+
     def complete_job(self, job_key: str):
 
         request_url = f"{self.base_url}/v2/jobs/{job_key}/completion"
@@ -201,91 +202,37 @@ class CamundaService:
         except requests.exceptions.RequestException as exception:
             logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
 
-def main():
 
-    # data = {
-    #     "grant_type":"client_credentials",
-    #     "audience":"zeebe.camunda.io",
-    #     "client_id":"F-7-8s0.Bw3Vji7OlJiXzLxvKgxFGLGN",
-    #     "client_secret":"gLwyE~qJ5WErO~RXqQt0I5aQaWGw7x8k_4.6szM8lwhDJeWV~i_9pGIr20UU4REP"
-    # }
+    def get_variable(self, process_instance_key: str, variable_name: str) -> str:
 
-    # response = requests.post(url='https://login.cloud.camunda.io/oauth/token',
-    #                         headers={"Content-Type": "application/x-www-form-urlencoded"},
-    #                         data=data)
-    
-    # if response is None:
-    #     raise Exception(f"Failed to get a response.")
+        request_url = f"{self.base_url}/v2/variables/search"
 
-    # if response.status_code != 200:
-    #     raise Exception(f'Failed to extract data. Status Code: {response.status_code}. Response: {response.text}')
-    
-    # # print(response.json())
-    # access_token = response.json().get("access_token")
+        request_headers = REQUEST_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
-    # print(access_token)
-    # print(os.linesep)
+        payload = json.dumps({
+            "filter": {
+                "processInstanceKey": f"{process_instance_key}"
+            }
+        })
 
-    # job_url = "https://syd-1.zeebe.camunda.io:443/7a12d381-80a3-4a0d-a86c-31cba730f5bb/v2/jobs/activation"
-    processSearchUrl = "https://syd-1.zeebe.camunda.io:443/7a12d381-80a3-4a0d-a86c-31cba730f5bb/v2/process-instances/search"
+        try:
+            response = requests.post(
+                url=request_url,
+                headers=request_headers,
+                data=payload
+            )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Accept":"application/json",
-        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlFVVXdPVFpDUTBVM01qZEVRME0wTkRFelJrUkJORFk0T0RZeE1FRTBSa1pFUlVWRVF6bERNZyJ9.eyJodHRwczovL2NhbXVuZGEuY29tL2NsdXN0ZXJJZCI6IjdhMTJkMzgxLTgwYTMtNGEwZC1hODZjLTMxY2JhNzMwZjViYiIsImh0dHBzOi8vY2FtdW5kYS5jb20vb3JnSWQiOiJlYjQyZjEwZS1lNTQ2LTQ1NWUtOGM4MS1hY2IzNmY4MjNmMGUiLCJodHRwczovL2NhbXVuZGEuY29tL2NsaWVudElkIjoiRi03LThzMC5CdzNWamk3T2xKaVh6THh2S2d4RkdMR04iLCJpc3MiOiJodHRwczovL3dlYmxvZ2luLmNsb3VkLmNhbXVuZGEuaW8vIiwic3ViIjoibXdvOTB0MnIzMTYwN3ozNkJOSDY5dFdGS0JYNTVqMVdAY2xpZW50cyIsImF1ZCI6InplZWJlLmNhbXVuZGEuaW8iLCJpYXQiOjE3NjU4NTY3OTAsImV4cCI6MTc2NTk0MzE5MCwic2NvcGUiOiI3YTEyZDM4MS04MGEzLTRhMGQtYTg2Yy0zMWNiYTczMGY1YmIiLCJndHkiOiJjbGllbnQtY3JlZGVudGlhbHMiLCJhenAiOiJtd285MHQycjMxNjA3ejM2Qk5INjl0V0ZLQlg1NWoxVyJ9.MxQGQXuvu007MyShAJwj6xt-PMPHXSVuW6vsdnV5icBuV-sVhtU5w3dFAGvAe323rMM1NLEKr_Yp4wiT1nctwz7doTE-_GOZk9dJklMH8enicySmejUqJoTMtyURThgyNPEMc5ssoSigxVSlDjQ2Brrcv8W4L8DmCEhl7CHZQRmgbckndE_V4kWiCn8JKYYDSWq-r3OvdYS8AeYyNJQ_JhHXv0rX1DLTLpd3mMcH47muWRd5Z0s1tA5QKdRFR--xCtixTfHDnlq7qh1I_pR0SbERSKk3agRmKw0tb2CD9FD_Fr9QmFKHVpPTCtiaFvJHegLnNpIcThGumsO6uMzxIg"
-    }
+            if response.ok:
+                variables = response.json().get("items")
+                
+                logging.info(f"{request_url} - {json.dumps(variables, indent=4)}")
 
-    data = json.dumps({
-        "type": "call-api",
-        "worker": "worker-324",
-        "timeout": 20000,
-        "maxJobsToActivate": 1,
-        "fetchVariable": ["animal"]
-    })
+                filtered_variables = [var for var in variables if var["name"] == variable_name ]
 
-    print(headers)
-    print(os.linesep)
-
-    processSearchResponse = requests.post(url=processSearchUrl,
-                  headers=headers)
-    
-    print(processSearchResponse)
-    print(json.dumps(processSearchResponse.json(), indent=4))
-    print(os.linesep)
-
-    processInstanceUrl = "https://syd-1.zeebe.camunda.io:443/7a12d381-80a3-4a0d-a86c-31cba730f5bb/v2/process-instances/4503599627497423"
-
-    processInstanceResponse = requests.get(url=processInstanceUrl,
-                 headers=headers)
-
-    print(processInstanceResponse)
-    print(json.dumps(processInstanceResponse.json(), indent=4))
-    print(os.linesep)
-
-    jobResponse = requests.post(url="https://syd-1.zeebe.camunda.io:443/7a12d381-80a3-4a0d-a86c-31cba730f5bb/v2/jobs/search",
-                  headers=headers)
-    
-    print(jobResponse)
-    print(json.dumps(jobResponse.json(), indent=4))
-    print(os.linesep)
-
-    jobActivationResponse = requests.post(url="https://syd-1.zeebe.camunda.io:443/7a12d381-80a3-4a0d-a86c-31cba730f5bb/v2/jobs/activation",
-                                          headers=headers,
-                                          data=data)
-    
-    print(jobActivationResponse)
-    print(json.dumps(jobActivationResponse.json(), indent=4))
-    print(os.linesep)
-
-    jobCompletionResponse = requests.post(url="https://syd-1.zeebe.camunda.io:443/7a12d381-80a3-4a0d-a86c-31cba730f5bb/v2/jobs/4503599627497429/completion",
-                                          headers=headers,
-                                          data=json.dumps({ "variables": {"animal": "cat"} }))
-    
-    print(jobCompletionResponse)
-    # print(json.dumps(jobCompletionResponse.json(), indent=4))
-    print(jobCompletionResponse.json())
-
-class JobWorkerClient:
-
-    def __init__(self):
-        pass
+                if len(filtered_variables) > 0:
+                    return filtered_variables[0]["value"]
+            else:
+                raise Exception(f'Failed to get variables for process instance [{process_instance_key}]. Status Code: {response.status_code}. Response: {response.text}')
+        
+        except requests.exceptions.RequestException as exception:
+            logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
