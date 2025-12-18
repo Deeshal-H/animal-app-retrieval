@@ -21,23 +21,23 @@ SERVICE_TASK_JOB_TYPE = "retrieve-animal-imag"
 def home():
     if request.method == 'POST':
 
-        # camunda_service = initialise_camunda_service()
+        camunda_service = initialise_camunda_service()
 
-        # app.logger.info(f"{camunda_service.base_url}")
+        app.logger.info(f"{camunda_service.base_url}")
         
-        # camunda_service.get_token()
+        camunda_service.get_token()
         
-        # process_instance_key = camunda_service.create_process_instance(process_model=PROCESS_MODEL, variables={"animal": "fox"})
+        process_instance_key = camunda_service.create_process_instance(process_model=PROCESS_MODEL, variables={"animal": "fox"})
         
-        # time.sleep(10)
+        time.sleep(10)
         
-        # camunda_service.get_process_instance(process_instance_key)
+        camunda_service.get_process_instance(process_instance_key)
         
-        # job_key = camunda_service.search_jobs(process_instance_key=process_instance_key, service_task_job_type=SERVICE_TASK_JOB_TYPE)
+        job_key = camunda_service.search_jobs(process_instance_key=process_instance_key, service_task_job_type=SERVICE_TASK_JOB_TYPE)
         
-        # camunda_service.activate_jobs(service_task_job_type=SERVICE_TASK_JOB_TYPE, timeout=60000, max_jobs_to_activate=5)
+        camunda_service.activate_jobs(service_task_job_type=SERVICE_TASK_JOB_TYPE, timeout=60000, max_jobs_to_activate=5)
         
-        # camunda_service.complete_job(job_key)
+        camunda_service.complete_job(job_key)
 
         return render_template('index.html', complete=True, animal_url="https:\/\/randomfox.ca\/images\/114.jpg")
     else:
