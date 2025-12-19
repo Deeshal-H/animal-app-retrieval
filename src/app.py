@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session
 import logging
 from service.camunda_service import CamundaService
 from dotenv import load_dotenv, find_dotenv
@@ -6,21 +6,35 @@ import os
 import time
 import json
 import sys
-# import yaml
-# from pathlib import Path
+import yaml
+from pathlib import Path
+from service.animal_api_service import AnimalService
 
+# PROCESS NAME
 PROCESS_MODEL = "Process_AnimalImageRetrieval"
-SERVICE_TASK_JOB_TYPE = "retrieve-animal-imag"
+
+# NAME OF SERVICE TASK TO RETRIEVE IMAGE
+SERVICE_TASK_JOB_TYPE = "retrieve-animal-image"
+
+# NAME OF INPUT VARIABLE TO SERVICE TASK TO RETRIEVE IMAGE
 INPUT_ANIMAL_VAR = "animal"
+
+# NAME OF OUTPUT VARIABLE THAT HOLDS THE ANIMAL IMAGE URL
 OUTPUT_ANIMAL_URL_VAR = "animal_url"
 
- # Configure logging
+# Directories where the Camunda resources to be deployed are placed
+ASSET_DIR = "assets"
+
+
+ # Configure root-level logging.
+ # For debugging purposes, this is currently set to DEBUG
+ # TODO: Complete mechanism to overwrite log level based on a yaml config file
+ # TODO: Add option to output to either StreamHandler or FileHandler or both
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='[%(asctime)s] %(levelname)s: %(message)s',
     handlers=[
         logging.StreamHandler()
-        # ,logging.FileHandler(f"./src/logs/logs_{time.strftime('%Y%m%d_%H-00-00', time.localtime(time.time()))}.txt", mode='a')
     ]
 )
 
@@ -28,31 +42,85 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# Set the secret key to use flask session data. This is used to store the access token in a session
+# TODO: Load the secret_key in an environment variable
+app.secret_key = 'scorm/3o9btmgnh45l1'
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
+
     if request.method == 'POST':
 
-        logger.info(get_source_path("assets/Animal Image Retrieval.bpmn"))
-        logger.info(get_source_path("app.yaml"))
+        """
+        TODO: Future functionality - This section is to load config values from a file
+        
+        # Retrieves config values from a file named (implemented but not in use)
+        config_values = get_config_values()
 
-        selected_animal = request.form.get('animal')
+        # Use the log_level from the config file to override the root level logging (implemented but not in use)
+        # if config_values["log_level"] is not None:
+        #     override_root_level_log_level(config_values['log_level'])
+        """
 
-        logger.info(selected_animal)
+        animal_selected = request.form.get('animal')
+        logger.info(f"Animal selected: {animal_selected}")
 
         camunda_service = initialise_camunda_service()
+        logger.debug(f"Retrieved base url: {camunda_service.base_url}")
 
-        logger.info(f"{camunda_service.base_url}")
+        logger.info(f"{session['token']}")
         
-        # camunda_service.get_token()
+        # check if a token exists in the session and, if it does, check if it is still valid
+        # TODO: Implement token refresh functionality. At the moment, a request to get the cluster topology is used to see if the token is still valid
+        token_valid = False
 
-        camunda_service.access_token = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IlFVVXdPVFpDUTBVM01qZEVRME0wTkRFelJrUkJORFk0T0RZeE1FRTBSa1pFUlVWRVF6bERNZyJ9.eyJodHRwczovL2NhbXVuZGEuY29tL2NsdXN0ZXJJZCI6IjdhMTJkMzgxLTgwYTMtNGEwZC1hODZjLTMxY2JhNzMwZjViYiIsImh0dHBzOi8vY2FtdW5kYS5jb20vb3JnSWQiOiJlYjQyZjEwZS1lNTQ2LTQ1NWUtOGM4MS1hY2IzNmY4MjNmMGUiLCJodHRwczovL2NhbXVuZGEuY29tL2NsaWVudElkIjoiRi03LThzMC5CdzNWamk3T2xKaVh6THh2S2d4RkdMR04iLCJpc3MiOiJodHRwczovL3dlYmxvZ2luLmNsb3VkLmNhbXVuZGEuaW8vIiwic3ViIjoibXdvOTB0MnIzMTYwN3ozNkJOSDY5dFdGS0JYNTVqMVdAY2xpZW50cyIsImF1ZCI6InplZWJlLmNhbXVuZGEuaW8iLCJpYXQiOjE3NjYwNzMzNDksImV4cCI6MTc2NjE1OTc0OSwic2NvcGUiOiI3YTEyZDM4MS04MGEzLTRhMGQtYTg2Yy0zMWNiYTczMGY1YmIiLCJndHkiOiJjbGllbnQtY3JlZGVudGlhbHMiLCJhenAiOiJtd285MHQycjMxNjA3ejM2Qk5INjl0V0ZLQlg1NWoxVyJ9.Uzfcho5SWsedphhVaDxm6TCBws2gTZueaKLCOo3zSl8w_pAvi1XTRnsidahsc_6fynsaI5jgksQDz4V60UOuqU87bjbbmamrBKBLFUMOHkzjkqTEJcyvabW1OCZ09cWcS36-G4cWQxmh1k63sehEHFykoeWAEfrFXVGCEWUGQ5sQrOid0Zy-cCVEzlqoINDznOXOBjSlpE__9o2VLvdFaf6xzFTp27eVDoByEMN_JQj3pUuZt-SjMDSgkRno_mPE2ZkNoSWZn67O3qFWyQkRVf76EkiE5Gt2JPaq8da3M3I9kPWnqvutDvq5FfscEWq7bam8mex29lF1UgL9z1R9YQ"
+        if session['token'] is not None:
+            logger.info(f"Found token in session")
+            camunda_service.access_token = session['token']        
+            token_valid = camunda_service.get_cluster_topology()
 
+            if token_valid is None: # Could not get cluster topology to check token validity
+                error_message = "Failed to check for token validity or token invalid."
+                logger.error(error_message)
+                return render_template('index.html', show_error_message=True, error_message=error_message)
+            elif not token_valid:
+                 logger.info(f"Token invalid")
+            else:
+                 token_valid = True
+                 logger.info(f"Token still valid")
+
+        #if the token is not in the session or the validity check failed, get a new token
+        if session['token'] is None or not token_valid:
+            logger.info(f"Token expired. Refreshing token")
+            camunda_service.get_token()
+
+            if camunda_service.access_token is not None:
+                session['token'] = camunda_service.access_token
+            else:
+                error_message = "Failed to get token."
+                logger.error(error_message)
+                return render_template('index.html', show_error_message=True, error_message=error_message)
+
+        # animal_service = AnimalService()
+        # animal_url = animal_service.get_animal_url(animal=animal_selected)
+
+        # logger.info(f"animal_urls: {animal_url}")
+
+        # retrieve the deployment resources from the assets directory
         resource_files = os.listdir("assets")
-        resource_paths = ['assets/' + file for file in resource_files]
+        resource_paths = ['./' + ASSET_DIR + "/" + file for file in resource_files]
 
-        logger.info(f"resource_paths: {resource_paths}")
+        logger.info(f"Retrieved deployment resources resource: {resource_paths}")
 
-        # camunda_service.deploy_resources(resource_paths)
+        # deploy the resources
+        deploymentKey = camunda_service.deploy_resources(resource_paths)
+
+        if deploymentKey is None:
+            error_message = "Failed to deploy resources"
+            logger.error(error_message)
+            return render_template('index.html', show_error_message=True, error_message=error_message)
+        
+        logger.info(f"Resources successfully deployed. Deployment key: {deploymentKey}")
         
         # process_instance_key = camunda_service.create_process_instance(process_model=PROCESS_MODEL, variables={INPUT_ANIMAL_VAR: selected_animal})
         
@@ -70,10 +138,15 @@ def home():
         
         # camunda_service.complete_job(job_key)
 
-        return render_template('index.html', complete=True, animal_url="https://randomfox.ca/images/114.jpg")
+        return render_template('index.html', complete=True)
     else:
         return render_template('index.html')
 
+def get_animal_url(animal: str) -> str:
+
+    animal_service = AnimalService(animal=animal)
+
+    animal_service.handleAnimal()
 
 def initialise_camunda_service() -> CamundaService:
 
@@ -89,16 +162,31 @@ def initialise_camunda_service() -> CamundaService:
 
     return camunda_service
 
-# def get_config():
+def get_config_values() -> dict[str, str]:
 
-#     # retrieve config values from yaml file
-#     yaml_file_path = __file__.replace(".py", ".yaml")
+    # retrieve config values from yaml file
+    yaml_file_path = __file__.replace(".py", ".yaml")
 
-#     if Path(yaml_file_path).exists:
-#         with open(yaml_file_path, encoding='utf-8') as yaml_file:
-#             yaml_config = yaml.safe_load(yaml_file)
-#     else:
-#         raise Exception(f"Missing {yaml_file_path} file.")
+    if Path(yaml_file_path).exists:
+        with open(yaml_file_path, encoding='utf-8') as yaml_file:
+            yaml_config = yaml.safe_load(yaml_file)
+    else:
+        raise Exception(f"Missing {yaml_file_path} file.")
+    
+    config_values = {}
+
+    log_level = yaml_config.get("config").get("log_level")
+    base_url = yaml_config.get("base_url")
+
+    config_values = config_values | { "log_level": log_level } | { "base_url": base_url }
+
+    return config_values
+
+
+def override_root_level_log_level(log_level: str):
+
+    logging.getLogger().setLevel(logging._nameToLevel[log_level])
+
 
 def get_source_path(relative_path):
     if hasattr(sys,'_MEIPASS'):

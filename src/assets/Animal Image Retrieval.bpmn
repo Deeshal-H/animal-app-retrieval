@@ -19,7 +19,7 @@
     <bpmn:sequenceFlow id="Flow_1ptue2v" sourceRef="UserTask_DisplayAnimalImage" targetRef="Event_EndImageRetrieval" />
     <bpmn:serviceTask id="ServiceTask_RetrieveAnimalImage" name="Retrieve Animal Image">
       <bpmn:extensionElements>
-        <zeebe:taskDefinition type="retrieve-animal-imag" />
+        <zeebe:taskDefinition type="retrieve-animal-image" />
         <zeebe:ioMapping>
           <zeebe:input source="=animal" target="animal" />
         </zeebe:ioMapping>
@@ -57,10 +57,6 @@
           <dc:Bounds x="152" y="165" width="57" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1n076s2_di" bpmnElement="Flow_1n076s2">
-        <di:waypoint x="450" y="140" />
-        <di:waypoint x="610" y="140" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1ptue2v_di" bpmnElement="Flow_1ptue2v">
         <di:waypoint x="710" y="140" />
         <di:waypoint x="862" y="140" />
@@ -68,6 +64,10 @@
       <bpmndi:BPMNEdge id="Flow_0z4ciap_di" bpmnElement="Flow_0z4ciap">
         <di:waypoint x="198" y="140" />
         <di:waypoint x="350" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n076s2_di" bpmnElement="Flow_1n076s2">
+        <di:waypoint x="450" y="140" />
+        <di:waypoint x="610" y="140" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

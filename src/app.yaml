@@ -1,1 +1,3 @@
-log_level: INFO
+base_url: some_url
+config:
+  log_level: DEBUG

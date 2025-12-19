@@ -4,6 +4,7 @@ import logging
 import requests
 import os
 import time
+from service.animal_api_service import AnimalService
 
 REQUEST_JSON_HEADERS = {
     "Content-Type": "application/json",
@@ -48,11 +49,46 @@ class CamundaService:
             logging.error(f"Failed to connect to '{self.auth_url}' -> {str(exception)}")
 
 
-    def deploy_resources(self, resource_paths: list[str]):
+    def get_cluster_topology(self) -> bool | None:
+
+        request_url = f"{self.base_url}/v2/topology"
+
+        headers = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
+
+        logger.info(headers)
+
+        try:
+            response = requests.post(url=request_url, headers=headers)
+
+            if response.ok:
+                logging.debug(f"{request_url} - {json.dumps(response.json(), indent=4)}")
+
+                return True
+            else:
+                logging.error(f"Failed to get cluster topology'. Status Code: {response.status_code}. Response: {response.text}")
+
+                return False
+        
+        except requests.exceptions.RequestException as exception:
+            logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
+
+
+    def deploy_resources(self, resource_paths: list[str]) -> str:
+        """
+        Deploys one or more resources (e.g. processes, decision models, or forms)
+
+        Args:
+            resource_paths (list[str]): List of relative paths of deployment resource files
+
+        Returns:
+            str: Unique key identifying the deployment
+        """
 
         request_url = f"{self.base_url}/v2/deployments"
 
         headers = { "Authorization": f"Bearer {self.access_token}" }
+
+        logger.debug(f"{__name__} Token: {self.access_token}")
 
         files = []
 
@@ -61,13 +97,17 @@ class CamundaService:
                 ('resources', (file_path, open(file_path, 'rb'), 'application/octet-stream'))
             )
 
+        logger.debug(files)
+
         payload = {}
 
         try:
-            response = requests.request("POST", request_url, headers=headers, data=payload, files=files)
+            response = requests.post(url=request_url, headers=headers, data=payload, files=files)
 
             if response.ok:
-                logging.info(f"{request_url} - {json.dumps(response.json(), indent=4)}")
+                logging.debug(f"{request_url} - {json.dumps(response.json(), indent=4)}")
+
+                return response.json().get("deploymentKey")
             else:
                 logging.error(f"Failed to deploy resources '{resource_paths}'. Status Code: {response.status_code}. Response: {response.text}")
         
@@ -209,14 +249,18 @@ class CamundaService:
             logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
 
 
-    def complete_job(self, job_key: str, variables: str):
+    def complete_job(self, job_key: str, animal: str) -> str:
+
+        animal_service = AnimalService()
+        animal_url = animal_service.get_animal_url(animal=animal)
+        logger.info(f"Retrieved URL for animal {animal}: {animal_url}")
 
         request_url = f"{self.base_url}/v2/jobs/{job_key}/completion"
 
         REQUEST_JSON_HEADERS = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
         payload = json.dumps({
-            "variables": variables # {"animal_url": "https:\/\/randomfox.ca\/images\/114.jpg"}
+            "variables": { "animal_url": animal_url }
         })
 
         try:
@@ -233,6 +277,8 @@ class CamundaService:
         
         except requests.exceptions.RequestException as exception:
             logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
+        
+        return animal_url
 
 
     def get_variable(self, process_instance_key: str, variable_name: str) -> str:
