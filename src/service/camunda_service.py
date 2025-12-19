@@ -2,11 +2,15 @@ from urllib.parse import urlencode
 import json
 import logging
 import requests
+import os
+import time
 
-REQUEST_HEADERS = {
+REQUEST_JSON_HEADERS = {
     "Content-Type": "application/json",
-    "Accept":"application/json"
+    "Accept": "application/json"
 }
+
+logger = logging.getLogger(__name__)
 
 class CamundaService:
 
@@ -16,6 +20,7 @@ class CamundaService:
         self.client_id = None
         self.client_secret = None
         self.auth_url = None
+
 
     def get_token(self):
         
@@ -37,38 +42,65 @@ class CamundaService:
                 access_token = response.json().get("access_token")
                 self.access_token = access_token
             else:
-                logging.warning(f'Failed to authenticate. Status Code: {response.status_code}. Response: {response.text}')
+                logging.error(f"Failed to authenticate. Status Code: {response.status_code}. Response: {response.text}")
     
         except requests.exceptions.RequestException as exception:
-            logging.error(f"Failed to connect to [{self.auth_url}] -> {str(exception)}")
+            logging.error(f"Failed to connect to '{self.auth_url}' -> {str(exception)}")
+
+
+    def deploy_resources(self, resource_paths: list[str]):
+
+        request_url = f"{self.base_url}/v2/deployments"
+
+        headers = { "Authorization": f"Bearer {self.access_token}" }
+
+        files = []
+
+        for file_path in resource_paths:
+            files.append(
+                ('resources', (file_path, open(file_path, 'rb'), 'application/octet-stream'))
+            )
+
+        payload = {}
+
+        try:
+            response = requests.request("POST", request_url, headers=headers, data=payload, files=files)
+
+            if response.ok:
+                logging.info(f"{request_url} - {json.dumps(response.json(), indent=4)}")
+            else:
+                logging.error(f"Failed to deploy resources '{resource_paths}'. Status Code: {response.status_code}. Response: {response.text}")
+        
+        except requests.exceptions.RequestException as exception:
+            logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
 
 
     def search_process_definitions(self):
 
         request_url = f"{self.base_url}/v2/process-definitions/search"
 
-        request_headers = REQUEST_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
+        REQUEST_JSON_HEADERS = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
         try:
             response = requests.post(
                 url=request_url,
-                headers=request_headers
+                headers=REQUEST_JSON_HEADERS
             )
 
             if response.ok:
                 logging.info(f"{request_url} - {json.dumps(response.json(), indent=4)}")
             else:
-                logging.warning(f'Failed to retrieve process definitions. Status Code: {response.status_code}. Response: {response.text}')
+                logging.error(f"Failed to retrieve process definitions. Status Code: {response.status_code}. Response: {response.text}")
         
         except requests.exceptions.RequestException as exception:
-            logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
+            logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
 
 
     def create_process_instance(self, process_model: str, variables: str) -> str:
 
         request_url = f"{self.base_url}/v2/process-instances"
 
-        request_headers = REQUEST_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
+        REQUEST_JSON_HEADERS = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
         payload = json.dumps({
             "processDefinitionId": process_model,
@@ -78,7 +110,7 @@ class CamundaService:
         try:
             response = requests.post(
                 url=request_url,
-                headers=request_headers,
+                headers=REQUEST_JSON_HEADERS,
                 data=payload
             )
 
@@ -87,38 +119,38 @@ class CamundaService:
         
                 return response.json().get("processInstanceKey")
             else:
-                raise Exception(f'Failed to create process instance. Status Code: {response.status_code}. Response: {response.text}')
+                logging.error(f"Failed to create process instance. Status Code: {response.status_code}. Response: {response.text}")
         
         except requests.exceptions.RequestException as exception:
-            logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
+            logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
 
 
     def get_process_instance(self, process_instance_key: str):
 
         request_url = f"{self.base_url}/v2/process-instances/{process_instance_key}"
 
-        request_headers = REQUEST_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
+        REQUEST_JSON_HEADERS = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
         try:
             response = requests.get(
                 url=request_url,
-                headers=request_headers
+                headers=REQUEST_JSON_HEADERS
             )
 
             if response.ok:
                 logging.info(f"{request_url} - {json.dumps(response.json(), indent=4)}")
             else:
-                raise Exception(f'Failed to get process instance [{process_instance_key}]. Status Code: {response.status_code}. Response: {response.text}')
+                logging.error(f"Failed to get process instance '{process_instance_key}''. Status Code: {response.status_code}. Response: {response.text}")
 
         except requests.exceptions.RequestException as exception:
-            logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
+            logging.error(f"Failed to connect to '{request_url}] -> {str(exception)}")
 
 
     def search_jobs(self, process_instance_key: str, service_task_job_type: str) -> str:
 
         request_url = f"{self.base_url}/v2/jobs/search"
 
-        request_headers = REQUEST_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
+        REQUEST_JSON_HEADERS = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
         payload = json.dumps({
             "filter": {
@@ -130,7 +162,7 @@ class CamundaService:
         try:
             response = requests.post(
                 url=request_url,
-                headers=request_headers,
+                headers=REQUEST_JSON_HEADERS,
                 data=payload
             )
 
@@ -142,18 +174,18 @@ class CamundaService:
                 if len(jobs) > 0:
                     return jobs[0].get("jobKey")
             else:
-                raise Exception(f'Failed to search for job [{service_task_job_type}] for process instance [{process_instance_key}]. \
-                                Status Code: {response.status_code}. Response: {response.text}')
+                logging.error(f"Failed to search for job '{service_task_job_type}' for process instance '{process_instance_key}'. \
+                                Status Code: {response.status_code}. Response: {response.text}")
         
         except requests.exceptions.RequestException as exception:
-            logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
+            logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
 
 
     def activate_jobs(self, service_task_job_type: str, timeout: int, max_jobs_to_activate: int):
 
         request_url = f"{self.base_url}/v2/jobs/activation"
 
-        request_headers = REQUEST_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
+        REQUEST_JSON_HEADERS = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
         payload = json.dumps({
             "type": service_task_job_type,
@@ -164,61 +196,68 @@ class CamundaService:
         try:
             response = requests.post(
                 url=request_url,
-                headers=request_headers,
+                headers=REQUEST_JSON_HEADERS,
                 data=payload
             )
             
             if response.ok:
                 logging.info(f"{request_url} - {json.dumps(response.json(), indent=4)}")
             else:
-                raise Exception(f'Failed to activate [{service_task_job_type}] jobs. Status Code: {response.status_code}. Response: {response.text}')
+                logging.error(f"Failed to activate '{service_task_job_type}' jobs. Status Code: {response.status_code}. Response: {response.text}")
 
         except requests.exceptions.RequestException as exception:
-            logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
+            logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
 
 
-    def complete_job(self, job_key: str):
+    def complete_job(self, job_key: str, variables: str):
 
         request_url = f"{self.base_url}/v2/jobs/{job_key}/completion"
 
-        request_headers = REQUEST_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
+        REQUEST_JSON_HEADERS = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
         payload = json.dumps({
-            "variables": {"animal_url": "https:\/\/randomfox.ca\/images\/114.jpg"}
+            "variables": variables # {"animal_url": "https:\/\/randomfox.ca\/images\/114.jpg"}
         })
 
         try:
             response = requests.post(
                 url=request_url,
-                headers=request_headers,
+                headers=REQUEST_JSON_HEADERS,
                 data=payload
             )
 
             if response.ok:
                 logging.info(f"{request_url} - {response.text}")
             else:
-                raise Exception(f'Failed to complete job [{job_key}]. Status Code: {response.status_code}. Response: {response.text}')
+                logging.error(f"Failed to complete job '{job_key}'. Status Code: {response.status_code}. Response: {response.text}")
         
         except requests.exceptions.RequestException as exception:
-            logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
+            logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")
 
 
     def get_variable(self, process_instance_key: str, variable_name: str) -> str:
 
         request_url = f"{self.base_url}/v2/variables/search"
 
-        request_headers = REQUEST_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
+        REQUEST_JSON_HEADERS = REQUEST_JSON_HEADERS | {"Authorization": f"Bearer {self.access_token}"}
 
         payload = json.dumps({
             "filter": {
-                "processInstanceKey": f"{process_instance_key}"
+                "name": variable_name,
+                "processInstanceKey": process_instance_key,
+                "scopeKey": process_instance_key,
+                "tenantId": "<default>"
+            },
+            "page": {
+                "from": 0,
+                "limit": 1
             }
         })
 
         try:
             response = requests.post(
                 url=request_url,
-                headers=request_headers,
+                headers=REQUEST_JSON_HEADERS,
                 data=payload
             )
 
@@ -232,7 +271,7 @@ class CamundaService:
                 if len(filtered_variables) > 0:
                     return filtered_variables[0]["value"]
             else:
-                raise Exception(f'Failed to get variables for process instance [{process_instance_key}]. Status Code: {response.status_code}. Response: {response.text}')
+                logging.error(f"Failed to get variables for process instance '{process_instance_key}'. Status Code: {response.status_code}. Response: {response.text}")
         
         except requests.exceptions.RequestException as exception:
-            logging.error(f"Failed to connect to [{request_url}] -> {str(exception)}")
+            logging.error(f"Failed to connect to '{request_url}' -> {str(exception)}")

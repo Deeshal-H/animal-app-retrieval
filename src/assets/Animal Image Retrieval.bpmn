@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Web Modeler" exporterVersion="b5f5bac" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.8.0">
+  <bpmn:process id="Process_AnimalImageRetrieval" name="Animal Image Retrieval" isExecutable="true">
+    <bpmn:userTask id="UserTask_DisplayAnimalImage" name="Display Animal Image">
+      <bpmn:extensionElements>
+        <zeebe:formDefinition formId="Form_1nfityj" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=animal_url" target="animal_url" />
+          <zeebe:output source="=animal_url" target="animal_url" />
+        </zeebe:ioMapping>
+        <zeebe:userTask />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1n076s2</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ptue2v</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_EndImageRetrieval" name="End Image Retrieval">
+      <bpmn:incoming>Flow_1ptue2v</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1ptue2v" sourceRef="UserTask_DisplayAnimalImage" targetRef="Event_EndImageRetrieval" />
+    <bpmn:serviceTask id="ServiceTask_RetrieveAnimalImage" name="Retrieve Animal Image">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="retrieve-animal-imag" />
+        <zeebe:ioMapping>
+          <zeebe:input source="=animal" target="animal" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0z4ciap</bpmn:incoming>
+      <bpmn:outgoing>Flow_1n076s2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:startEvent id="StartEvent_ImageRetrieval" name="Start Image Retrieval">
+      <bpmn:extensionElements />
+      <bpmn:outgoing>Flow_0z4ciap</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0z4ciap" sourceRef="StartEvent_ImageRetrieval" targetRef="ServiceTask_RetrieveAnimalImage" />
+    <bpmn:sequenceFlow id="Flow_1n076s2" sourceRef="ServiceTask_RetrieveAnimalImage" targetRef="UserTask_DisplayAnimalImage" />
+  </bpmn:process>
+  <bpmn:message id="Message_1vr2ccn" name="Message_1vr2ccn" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_AnimalImageRetrieval">
+      <bpmndi:BPMNShape id="Activity_0wd554v_di" bpmnElement="UserTask_DisplayAnimalImage">
+        <dc:Bounds x="610" y="100" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0e26b9s_di" bpmnElement="Event_EndImageRetrieval">
+        <dc:Bounds x="862" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="853" y="165" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1t7zfd1_di" bpmnElement="ServiceTask_RetrieveAnimalImage">
+        <dc:Bounds x="350" y="100" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1ivupmt_di" bpmnElement="StartEvent_ImageRetrieval">
+        <dc:Bounds x="162" y="122" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="152" y="165" width="57" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1n076s2_di" bpmnElement="Flow_1n076s2">
+        <di:waypoint x="450" y="140" />
+        <di:waypoint x="610" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ptue2v_di" bpmnElement="Flow_1ptue2v">
+        <di:waypoint x="710" y="140" />
+        <di:waypoint x="862" y="140" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0z4ciap_di" bpmnElement="Flow_0z4ciap">
+        <di:waypoint x="198" y="140" />
+        <di:waypoint x="350" y="140" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

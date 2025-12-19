@@ -1,0 +1,23 @@
+{
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.8.0",
+  "exporter": {
+    "name": "Camunda Web Modeler",
+    "version": "f0b992f"
+  },
+  "schemaVersion": 19,
+  "id": "Form_1nfityj",
+  "components": [
+    {
+      "type": "image",
+      "layout": {
+        "row": "Row_1ptpw8x",
+        "columns": null
+      },
+      "id": "Field_0z90zec",
+      "source": "=animal_url",
+      "alt": "Cat"
+    }
+  ],
+  "type": "default"
+}
