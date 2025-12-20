@@ -2,9 +2,9 @@
 Service to retrieve animal image
 """
 
-import requests
-import logging
 import json
+import logging
+import requests
 
 # Stores the REST API URL for each animal type
 API_URLS = {

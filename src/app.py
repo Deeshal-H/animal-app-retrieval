@@ -1,14 +1,14 @@
-from flask import Flask, render_template, request, session
 import logging
-from service.camunda_service import CamundaService
-from dotenv import load_dotenv, find_dotenv
 import os
 import time
-import json
 import sys
 import yaml
+
+from dotenv import load_dotenv
+from flask import Flask, render_template, request, session
 from pathlib import Path
-from service.animal_api_service import AnimalService
+
+from service.camunda_service import CamundaService
 
 # PROCESS NAME
 PROCESS_MODEL = "Process_AnimalImageRetrieval"

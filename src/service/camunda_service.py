@@ -1,11 +1,10 @@
-from urllib.parse import urlencode
+
+import ast
 import json
 import logging
 import requests
-import os
-import time
+
 from service.animal_api_service import AnimalService
-import ast
 
 REQUEST_JSON_HEADERS = {
     "Content-Type": "application/json",
