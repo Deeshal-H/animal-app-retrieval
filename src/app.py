@@ -244,33 +244,6 @@ def override_root_level_log_level(log_level: str):
 
     logging.getLogger().setLevel(logging._nameToLevel[log_level])
 
-
-def get_source_path(relative_path: str) -> str:
-    """
-    This method is used in packaged mode to find the static files included in the package
-    
-    Args:
-        relative_path (_type_): The relative path of the file
-
-    Returns:
-        str: Absolute path of the file
-    """
-    
-    if hasattr(sys,'_MEIPASS'):
-        # Program is running in packaged mode
-        base_path = sys._MEIPASS
-    else:
-        # Program is running in development mode
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
-
-# Get the correct file path
-# data_file_path = get_source_path('mydata.txt')
-
-# with open(data_file_path, 'r') as f:
-#     print(f.read())
-
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
 
