@@ -15,7 +15,7 @@ env:
 image:
   repository: deeshal/animal-image-app
   # This sets the pull policy for images.
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "0.1"
 
