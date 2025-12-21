@@ -97,3 +97,4 @@ A user can then view the Camunda form from the tasklist and complete the process
 ## Improvements:
 - Add more unit tests and investigate ways to automate all actions in the process model to enable automated tests for all possible paths.
 - GitHub Actions to automate pytests, Docker image build, dry-run and push to Docker Hub.
+- The dog image web service sometimes returns an .mp4 which is invalid and the client app will show an error asking to re-try.

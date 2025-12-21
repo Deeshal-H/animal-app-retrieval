@@ -1,6 +1,6 @@
 To access the application from a host with kubernetes, run the following command:
 kubectl --namespace {{ .Release.Namespace }} port-forward service/{{ include "animal-image-app.fullname" . }} [LOCAL PORT]:{{ .Values.service.port }}
-The application with then be available on http://127.0.0.1/[LOCAL PORT]
+The application with then be available on http://127.0.0.1:[LOCAL PORT]
 
 If using minikube, run the following command:
 minikube service {{ include "animal-image-app.fullname" . }} --url
