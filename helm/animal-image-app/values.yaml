@@ -9,6 +9,7 @@ env:
     CAMUNDA_CLIENT_ID: 
     CAMUNDA_CLIENT_SECRET: 
     CAMUNDA_OAUTH_URL: 
+    FLASK_SESSION_SECRET_KEY: 
 
 # Sets the image values for the container
 image:

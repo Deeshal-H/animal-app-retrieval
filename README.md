@@ -49,4 +49,5 @@ The environment variables file path must contain the following items:
 | CAMUNDA_CLIENT_ID | The client ID used to request an access token from the authorization server. |
 | CAMUNDA_CLIENT_SECRET | The client secret used to request an access token from the authorization server. |
 | CAMUNDA_OAUTH_URL | The URL of the authorization server from which the access token can be requested. |
+| FLASK_SESSION_SECRET_KEY | The secret key used by Flask to secure sessions, cookies and other cryptographic operations. |
 

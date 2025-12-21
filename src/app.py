@@ -42,9 +42,12 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Set the secret key to use flask session data. This is used to store the access token in a session
-# TODO: Load the secret_key in an environment variable
-app.secret_key = 'scorm/3o9btmgnh45l1'
+# Load the environment variables
+load_dotenv()
+
+# Set the secret key to use flask session data.
+app.secret_key = os.getenv('FLASK_SESSION_SECRET_KEY')
+
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
@@ -78,10 +81,13 @@ def home():
 
 
         # Retrieve the deployment resources from the assets directory
-        resource_files = os.listdir("assets")
-        resource_paths = ['./' + ASSET_DIR + "/" + file for file in resource_files]
+        assets_rel_dir = os.path.relpath(path=os.path.join(os.path.dirname(__file__), ASSET_DIR), start=os.path.abspath(os.curdir))
+
+        resource_files = os.listdir(assets_rel_dir)
+        resource_paths = ['./' + Path(assets_rel_dir).as_posix() + "/" + file for file in resource_files]
 
         logger.info(f"{logger.name} -> Retrieved deployment resources resource: {resource_paths}")
+
 
         # Deploy the resources
         deployment_key = camunda_service.deploy_resources(resource_paths)
@@ -131,6 +137,11 @@ def home():
         # handle the job and return the animal image url
         animal_image_url = camunda_service.complete_job(job_key, animal=animal_var)
 
+        if (animal_image_url.endswith(".mp4")):
+            error_message = "Retrieved a URL with an invalid extension. Please re-try."
+            logger.error(f"{logger.name} -> {error_message}")
+            return render_template('index.html', show_error_message=True, error_message=error_message)
+
         return render_template('index.html', complete=True, animal_image_url=animal_image_url)
     else:
         return render_template('index.html')
@@ -150,8 +161,6 @@ def initialise_camunda_service() -> CamundaService:
     Returns:
         CamundaService: Instance of camunda service
     """
-
-    load_dotenv()
 
     camunda_service = CamundaService()
 
@@ -178,14 +187,17 @@ def get_or_refresh_token(camunda_service: CamundaService) -> dict[bool, str]:
 
     token_valid = False
 
-    if session['token']:
+    # if the token is not in the session
+    if not session.get('token'):
+        logger.info(f"{logger.name} -> Token not found.")
+    else:
         logger.info(f"{logger.name} -> Found token in session")
         camunda_service.access_token = session['token']        
-        token_valid = camunda_service.get_cluster_topology()
+        token_verified = camunda_service.get_cluster_topology()
 
-        if token_valid is None: # None: Could not connect to check cluster topology to check token validity
+        if token_verified is None: # None: Could not connect to check cluster topology to check token validity
             return { "valid": False, "error_message": "Failed to check for token validity or token invalid." }
-        elif not token_valid: # False: Unauthorised to retrieve cluster topology
+        elif not token_verified: # False: Unauthorised to retrieve cluster topology
             logger.info(f"{logger.name} -> Token invalid")
         else:
             token_valid = True
@@ -193,8 +205,7 @@ def get_or_refresh_token(camunda_service: CamundaService) -> dict[bool, str]:
             return { "valid": True, "error_message": None }
 
     # if the token is not in the session or the validity check failed, get a new token
-    if not session['token'] or not token_valid:
-        logger.info(f"{logger.name} -> Token expired. Refreshing token")
+    if not token_valid:
         camunda_service.get_token()
 
         if camunda_service.access_token:
