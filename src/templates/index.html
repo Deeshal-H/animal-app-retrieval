@@ -20,8 +20,6 @@
     </form>
     {% if complete %}
         <h4>The process has been initiated. Please proceed to the Tasklist UI in Camunda to view the Camunda Form with the image.</h4>
-        <p>As a preview, below is the image retrieved:</p>
-        <img src={{ animal_image_url }} alt="Animal" style="max-height: 300px;" />
     {% elif show_error_message %}
         <p>ERROR: {{ error_message }}</p>
     {% endif %}

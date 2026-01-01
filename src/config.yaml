@@ -1,0 +1,6 @@
+logging:
+  log_level: DEBUG
+animal_api_url:
+  dog: https://random.dog/woof.json
+  duck: https://random-d.uk/api/v2/random
+  fox: https://randomfox.ca/floof

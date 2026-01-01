@@ -1,17 +1,8 @@
-"""
-Service to retrieve animal image
-"""
-
 import json
 import logging
 import requests
 
-# Stores the REST API URL for each animal type
-API_URLS = {
-    "dog": "https://random.dog/woof.json",
-    "duck": "https://random-d.uk/api/v2/random",
-    "fox": "https://randomfox.ca/floof"
-}
+from helpers.utils import Utils
 
 # Stores the property within the json response body that contains the image url
 RESPONSE_BODY_PROP = {
@@ -25,7 +16,11 @@ logger = logging.getLogger(__name__)
 class AnimalService:
 
     def __init__(self):
-        pass
+
+        # get the api urls from teh config file
+        self.animal_api_url = Utils.get_config_values().get("animal_api_url")
+        logger.debug(f"animal_api_url -> {self.animal_api_url}")
+
 
     def get_animal_url(self, animal: str) -> str:
         """
@@ -40,7 +35,7 @@ class AnimalService:
 
         logger.debug(f"{logger.name} -> Animal: {animal}")
 
-        url = API_URLS[animal]
+        url = self.animal_api_url[animal]
 
         logger.debug(f"{logger.name} -> Animal image url: {url}")
 

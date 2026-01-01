@@ -1,4 +1,3 @@
-
 import ast
 import json
 import logging
@@ -15,12 +14,13 @@ logger = logging.getLogger(__name__)
 
 class CamundaService:
 
-    def __init__(self):
-        self.base_url = None
-        self.token_audience = None
-        self.client_id = None
-        self.client_secret = None
-        self.auth_url = None
+    def __init__(self, base_url: str, token_audience: str, client_id: str, client_secret: str, auth_url: str):
+
+        self.base_url = base_url
+        self.token_audience = token_audience
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.auth_url = auth_url
 
 
     def get_token(self):
@@ -253,7 +253,7 @@ class CamundaService:
             logger.error(f"{logger.name} -> Error '{request_url}' -> {str(exception)}")
 
 
-    def activate_jobs(self, service_task_job_type: str, timeout: int, max_jobs_to_activate: int):
+    def activate_jobs(self, service_task_job_type: str, timeout: int, max_jobs_to_activate: int) -> list:
         """
         Activate jobs based on the job type.
 
@@ -261,6 +261,9 @@ class CamundaService:
             service_task_job_type (str): Job type, as defined in the BPMN process.
             timeout (int): Timeout period for which the activated jobs will not be activated by another activation call.
             max_jobs_to_activate (int): Maximum jobs to activate by this request.
+
+        Returns:
+            list: List of jobs
         """
 
         request_url = f"{self.base_url}/v2/jobs/activation"
@@ -286,6 +289,8 @@ class CamundaService:
             
             if response.ok:
                 logger.info(f"{logger.name} -> {request_url} - {json.dumps(response.json(), indent=4)}")
+
+                return response.json().get("jobs")
             else:
                 logger.error(f"{logger.name} -> Failed to activate '{service_task_job_type}' jobs. Status Code: {response.status_code}. Response: {response.text}")
 

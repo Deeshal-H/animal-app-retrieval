@@ -39,3 +39,10 @@ spec:
               protocol: TCP
           env:
           {{- include "helpers.list-env-variables" . | indent 12 }}
+      initContainers:  
+        - name: {{ .Values.jobWorker.name }}
+          image: "{{ .Values.jobWorker.image.repository }}:{{ .Values.jobWorker.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.jobWorker.pullPolicy }}
+          restartPolicy: Always
+          env:
+          {{- include "helpers.list-env-variables" . | indent 12 }}
