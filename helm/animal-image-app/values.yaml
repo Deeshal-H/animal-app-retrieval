@@ -4,12 +4,12 @@
 env:
   secretName: animal-image-app-secret
   secret:
-    ZEEBE_REST_ADDRESS: https://syd-1.zeebe.camunda.io/7a12d381-80a3-4a0d-a86c-31cba730f5bb
-    CAMUNDA_TOKEN_AUDIENCE: zeebe.camunda.io
-    CAMUNDA_CLIENT_ID: F-7-8s0.Bw3Vji7OlJiXzLxvKgxFGLGN
-    CAMUNDA_CLIENT_SECRET: gLwyE~qJ5WErO~RXqQt0I5aQaWGw7x8k_4.6szM8lwhDJeWV~i_9pGIr20UU4REP
-    CAMUNDA_OAUTH_URL: https://login.cloud.camunda.io/oauth/token
-    FLASK_SESSION_SECRET_KEY: scorm/3o9btmgnh45l1
+    ZEEBE_REST_ADDRESS:
+    CAMUNDA_TOKEN_AUDIENCE:
+    CAMUNDA_CLIENT_ID:
+    CAMUNDA_CLIENT_SECRET:
+    CAMUNDA_OAUTH_URL:
+    FLASK_SESSION_SECRET_KEY:
 
 # Sets the image values for the container
 image:
