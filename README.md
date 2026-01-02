@@ -55,7 +55,7 @@ The environment variables file path must contain the following items:
 
 ## Solution Architecture and Design:
 
-![Solution Architecture](images/architecture.png)
+<img src="images/architecture.png" alt="Solution Architecture" height="600px" />
 
 The `Animal Image Client` application is a web application build on Flask, the lightweight Python web framework. The application has been containerised for the purpose of running on a Kubernetes cluster. Internally, it makes requests to the `Orchestration Cluster REST API` to perform the automated actions.
 
