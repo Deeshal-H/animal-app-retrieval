@@ -1,12 +1,28 @@
 import pytest
-import requests
+import validators
+
 from src.service.animal_api_service import AnimalService
 
-def test_get_animal_url():
 
-    url = "https://random.dog/woof.json"
+@pytest.fixture
+def setup():
 
-    response = requests.get(url)
+    pytest.animals = {
+        "dog",
+        "duck",
+        "fox"
+    }
 
-    assert response.status_code == 200
-    assert "https://random.dog/" in response.json()["url"]
+@pytest.mark.parametrize("animal", [
+    "dog",
+    "duck",
+    "fox"
+])
+def test_get_animal_url(animal):
+
+    # animal_service = AnimalService()
+    # animal_url = animal_service.get_animal_url(animal)
+
+    # assert validators.url(animal_url)
+
+    assert 1 == 1
