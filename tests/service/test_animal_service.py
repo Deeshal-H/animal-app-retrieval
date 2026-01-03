@@ -20,9 +20,7 @@ def setup():
 ])
 def test_get_animal_url(animal):
 
-    # animal_service = AnimalService()
-    # animal_url = animal_service.get_animal_url(animal)
+    animal_service = AnimalService()
+    animal_url = animal_service.get_animal_url(animal)
 
-    # assert validators.url(animal_url)
-
-    assert 1 == 1
+    assert validators.url(animal_url)
