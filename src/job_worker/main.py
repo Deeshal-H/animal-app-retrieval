@@ -1,13 +1,21 @@
+"""
+Entrypoint for job worker
+"""
+
 import logging
 import os
 import time
 
 from dotenv import load_dotenv
 
+from service.animal_api_service import AnimalService
 from service.camunda_service import CamundaService
 
-# NAME OF SERVICE TASK TO RETRIEVE IMAGE
+# Name of service task to retrieve image
 SERVICE_TASK_JOB_TYPE = "retrieve-animal-image"
+
+# Name of output variable that holds the animal image url
+OUTPUT_ANIMAL_URL_VAR = "animal_url"
 
  # Configure root-level logging.
  # For debugging purposes, this is currently set to DEBUG
@@ -29,25 +37,32 @@ load_dotenv()
 # global variable to store the access token
 access_token = ""
 
-def main():
-    
-    logger.debug(f"Token -> {access_token}")
+def main(camunda_service: CamundaService):
+
+    logger.debug("Token -> %s", access_token)
 
     # Activate the jobs for the service task type
-    # NOTE: Set the timeout period to a relatively high 60 seconds as the call that handles the job completion can take around 45 seconds to complete depending on which animal is picked
-    #       The duck and fox REST services are slow
+    # NOTE: Set the timeout period to a relatively high 60 seconds as the call that handles the job completion can take around
+    #       45 seconds to complete depending on which animal is picked. The duck and fox REST services are slow
     jobs = camunda_service.activate_jobs(service_task_job_type=SERVICE_TASK_JOB_TYPE, timeout=60000, max_jobs_to_activate=5)
 
     for job in jobs:
-        # logger.debug(json.dumps(job, indent=4))
-        animal_var = job.get("variables").get("animal")
+        animal = job.get("variables").get("animal")
         job_key = job.get("jobKey")
-        
-        logger.debug(f"animal_var -> {animal_var}")
-        logger.debug(f"job_key -> {job_key}")
 
-        # handle the job and return the animal image url
-        animal_image_url = camunda_service.complete_job(job_key, animal=animal_var)
+        logger.debug("animal_var -> %s", animal)
+        logger.debug("job_key -> %s", job_key)
+
+        # get an image url based for the animal
+        animal_service = AnimalService()
+        animal_image_url = animal_service.get_animal_url(animal=animal)
+        logger.info("%s -> Retrieved URL for animal image %s: %s.", logger.name, animal, animal_image_url)
+
+        # handle the job failure or completion
+        if not animal_image_url:
+            camunda_service.fail_job(job_key=job_key, error_message=f"Failed to get animal image for {animal}.")
+        else:
+            animal_image_url = camunda_service.complete_job(job_key, variables={ OUTPUT_ANIMAL_URL_VAR: animal_image_url })
 
 
 def initialise_camunda_service() -> CamundaService:
@@ -65,7 +80,7 @@ def initialise_camunda_service() -> CamundaService:
         CamundaService: Instance of camunda service
     """
 
-    camunda_service = CamundaService(
+    return CamundaService(
         base_url = os.getenv('ZEEBE_REST_ADDRESS'),
         token_audience = os.getenv('CAMUNDA_TOKEN_AUDIENCE'),
         client_id = os.getenv('CAMUNDA_CLIENT_ID'),
@@ -73,17 +88,15 @@ def initialise_camunda_service() -> CamundaService:
         auth_url = os.getenv('CAMUNDA_OAUTH_URL')
     )
 
-    return camunda_service
-
 
 if __name__ == "__main__":
 
-    camunda_service = initialise_camunda_service()
+    camunda_service_init = initialise_camunda_service()
 
     # get the access_token and set the value to the global variable
-    camunda_service.get_token()
-    access_token = camunda_service.access_token
+    camunda_service_init.get_token()
+    access_token = camunda_service_init.access_token
 
     while True:
-        main()
+        main(camunda_service_init)
         time.sleep(60)

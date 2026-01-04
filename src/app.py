@@ -1,24 +1,21 @@
+"""
+Entry point of flask application
+"""
+
 import logging
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, session
-from pathlib import Path
 
-from helpers.utils import Utils
 from service.camunda_service import CamundaService
 
-# PROCESS NAME
+# Process name
 PROCESS_MODEL = "Process_AnimalImageRetrieval"
 
-# NAME OF SERVICE TASK TO RETRIEVE IMAGE
-SERVICE_TASK_JOB_TYPE = "retrieve-animal-image"
-
-# NAME OF INPUT VARIABLE TO SERVICE TASK TO RETRIEVE IMAGE
+# Name of input variable to service task that retrieves animal image
 INPUT_ANIMAL_VAR = "animal"
-
-# NAME OF OUTPUT VARIABLE THAT HOLDS THE ANIMAL IMAGE URL
-OUTPUT_ANIMAL_URL_VAR = "animal_url"
 
 # Directories where the Camunda resources to be deployed are placed
 ASSET_DIR = "assets"
@@ -49,19 +46,22 @@ app.secret_key = os.getenv('FLASK_SESSION_SECRET_KEY')
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
+    """
+    Home page route
+    """
 
     if request.method == 'POST':
 
         # # Retrieves config values
         # config_values = Utils.get_config_values()
-        # logger.debug(f"config_values -> {config_values}")
+        # logger.debug("config_values -> %s", config_values)
 
         animal_selected = request.form.get('animal')
-        logger.info(f"{logger.name} -> Animal selected: {animal_selected}")
+        logger.info("%s -> Animal selected: %s", logger.name, animal_selected)
 
         camunda_service = initialise_camunda_service()
-        logger.debug(f"{logger.name} -> Retrieved base url: {camunda_service.base_url}")
-        
+        logger.debug("%s -> Retrieved base url: %s", logger.name, camunda_service.base_url)
+
         # Check if a token exists in the session and, if it does, check if it is still valid
         # TODO: Implement token refresh functionality using jwt package to check for expiry.
         #       At the moment, a rudimentary method that makes a request to get the cluster topology is used to see if the token is still valid
@@ -77,7 +77,7 @@ def home():
         resource_files = os.listdir(assets_rel_dir)
         resource_paths = ['./' + Path(assets_rel_dir).as_posix() + "/" + file for file in resource_files]
 
-        logger.info(f"{logger.name} -> Retrieved deployment resources resource: {resource_paths}")
+        logger.info("%s -> Retrieved deployment resources resource: %s", logger.name, resource_paths)
 
 
         # Deploy the resources
@@ -86,10 +86,10 @@ def home():
         if not deployment_key:
             # Log the error message to the logger's handler(s) and output it to the html form
             error_message = "Failed to deploy resources"
-            logger.error(f"{logger.name} -> {error_message}")
+            logger.error("%s -> %s", logger.name, error_message)
             return render_template('index.html', show_error_message=True, error_message=error_message)
-        
-        logger.info(f"{logger.name} -> successfully deployed resources. Deployment Key: {deployment_key}")
+
+        logger.info("%s -> successfully deployed resources. Deployment Key: %s", logger.name, deployment_key)
 
 
         # Create and start a process instance
@@ -97,14 +97,14 @@ def home():
 
         if not process_instance_key:
             error_message = "Failed to create process instance"
-            logger.error(f"{logger.name} -> {error_message}")
+            logger.error("%s -> %s", logger.name, error_message)
             return render_template('index.html', show_error_message=True, error_message=error_message)
-        
-        logger.info(f"{logger.name} -> Successfully created process instance. Process Instance Key: {process_instance_key}")
+
+        logger.info("%s -> Successfully created process instance. Process Instance Key: %s", logger.name, process_instance_key)
 
         return render_template('index.html', complete=True, animal_image_url="")
-    else:
-        return render_template('index.html')
+
+    return render_template('index.html')
 
 
 def initialise_camunda_service() -> CamundaService:
@@ -142,26 +142,27 @@ def get_or_refresh_token(camunda_service: CamundaService) -> dict[bool, str]:
         camunda_service (CamundaService): CamundaService object
 
     Returns:
-        dict: dict[bool, str] Returns a dictionary indicating success or failure with error message, e.g. { "valid": False, "error_message": "Token invalid." }
+        dict[bool, str]: A dictionary indicating success or failure with error message, e.g. { "valid": False, "error_message": "Token invalid." }
     """
 
     token_valid = False
 
     # if the token is not in the session
     if not session.get('token'):
-        logger.info(f"{logger.name} -> Token not found.")
+        logger.info("%s -> Token not found.", logger.name)
     else:
-        logger.info(f"{logger.name} -> Found token in session")
-        camunda_service.access_token = session['token']        
+        logger.info("%s -> Found token in session", logger.name)
+        camunda_service.access_token = session['token']
         token_verified = camunda_service.get_cluster_topology()
 
         if token_verified is None: # None: Could not connect to check cluster topology to check token validity
             return { "valid": False, "error_message": "Failed to check for token validity or token invalid." }
-        elif not token_verified: # False: Unauthorised to retrieve cluster topology
-            logger.info(f"{logger.name} -> Token invalid")
+
+        if not token_verified: # False: Unauthorised to retrieve cluster topology
+            logger.info("%s -> Token invalid", logger.name)
         else:
             token_valid = True
-            logger.info(f"{logger.name} -> Token still valid")
+            logger.info("%s -> Token still valid", logger.name)
             return { "valid": True, "error_message": None }
 
     # if the token is not in the session or the validity check failed, get a new token
@@ -171,10 +172,9 @@ def get_or_refresh_token(camunda_service: CamundaService) -> dict[bool, str]:
         if camunda_service.access_token:
             session['token'] = camunda_service.access_token
             return { "valid": True, "error_message": None }
-        else:
-            return { "valid": False, "error_message": "Failed to get token." }
+
+    return { "valid": False, "error_message": "Failed to get token." }
 
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
-

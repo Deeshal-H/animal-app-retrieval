@@ -3,8 +3,6 @@ import json
 import logging
 import requests
 
-from service.animal_api_service import AnimalService
-
 REQUEST_JSON_HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json"
@@ -21,13 +19,14 @@ class CamundaService:
         self.client_id = client_id
         self.client_secret = client_secret
         self.auth_url = auth_url
+        self.access_token = ""
 
 
     def get_token(self):
         """
         Gets access token.
         """
-        
+
         payload = {
             "grant_type": "client_credentials",
             "audience": self.token_audience,
@@ -49,10 +48,10 @@ class CamundaService:
                 access_token = response.json().get("access_token")
                 self.access_token = access_token
             else:
-                logger.error(f"{logger.name} -> Failed to authenticate. Status Code: {response.status_code}. Response: {response.text}")
-    
+                logger.error("%s -> Failed to authenticate. Status Code: %s. Response: %s", logger.name, response.status_code, response.text)
+
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{self.auth_url}' -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, self.auth_url, str(exception))
 
 
     def get_cluster_topology(self) -> bool | None:
@@ -77,12 +76,12 @@ class CamundaService:
             if response.ok:
                 return True
             else:
-                logger.error(f"{logger.name} -> Failed to get cluster topology'. Status Code: {response.status_code}. Response: {response.text}")
+                logger.error("%s -> Failed to get cluster topology'. Status Code: %s. Response: %s", logger.name, response.status_code, response.text)
 
-                return False
-        
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{request_url}' -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+
+        return False
 
 
     def deploy_resources(self, resource_paths: list[str]) -> str:
@@ -108,7 +107,7 @@ class CamundaService:
                 ('resources', (file_path, open(file_path, 'rb'), 'application/octet-stream'))
             )
 
-        logger.debug(f"{logger.name} -> Files being deployed: {files}")
+        logger.debug("%s -> Files being deployed: %s", logger.name, files)
 
         payload = {}
 
@@ -116,14 +115,16 @@ class CamundaService:
             response = requests.post(url=request_url, headers=headers, data=payload, files=files)
 
             if response.ok:
-                logger.debug(f"{logger.name} -> {request_url} - {json.dumps(response.json(), indent=4)}")
+                logger.debug("%s -> %s - {json.dumps(response.json(), indent=4)}", logger.name, request_url)
 
                 return response.json().get("deploymentKey")
             else:
-                logger.error(f"{logger.name} -> Failed to deploy resources '{resource_paths}'. Status Code: {response.status_code}. Response: {response.text}")
-        
+                logger.error("%s -> Failed to deploy resources '%s'. Status Code: %s. Response: %s", logger.name, resource_paths, response.status_code, response.text)
+
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{request_url}' -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+
+        return ""
 
 
     def create_process_instance(self, process_model: str, variables: str) -> str:
@@ -159,14 +160,16 @@ class CamundaService:
             )
 
             if response.ok:
-                logger.debug(f"{logger.name} -> {request_url} - {json.dumps(response.json(), indent=4)}")
-        
+                logger.debug("%s -> %s - %s", logger.name, request_url, json.dumps(response.json(), indent=4))
+
                 return response.json().get("processInstanceKey")
             else:
-                logger.error(f"{logger.name} -> Failed to create process instance. Status Code: {response.status_code}. Response: {response.text}")
-        
+                logger.error("%s -> Failed to create process instance. Status Code: %s. Response: %s", logger.name, response.status_code, response.text)
+
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{request_url}' -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+
+        return ""
 
 
     def get_process_instance(self, process_instance_key: str):
@@ -177,7 +180,7 @@ class CamundaService:
             process_instance_key (str): Process instance key.
         """
 
-        request_url = f"{self.base_url}/v2/process-instances/{process_instance_key}"        
+        request_url = f"{self.base_url}/v2/process-instances/{process_instance_key}"
 
         headers = {
             "Content-Type": "application/json",
@@ -192,12 +195,13 @@ class CamundaService:
             )
 
             if response.ok:
-                logger.debug(f"{logger.name} -> {request_url} - {json.dumps(response.json(), indent=4)}")
+                logger.debug("%s -> %s - %s", logger.name, request_url, json.dumps(response.json(), indent=4))
             else:
-                logger.error(f"{logger.name} -> Failed to get process instance '{process_instance_key}''. Status Code: {response.status_code}. Response: {response.text}")
+                logger.error("%s -> Failed to get process instance '%s'. Status Code: %s. Response: %s",
+                             logger.name, process_instance_key, response.status_code, response.text)
 
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{request_url}] -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
 
 
     def search_jobs(self, process_instance_key: str, service_task_job_type: str) -> str:
@@ -226,7 +230,7 @@ class CamundaService:
             }
         })
 
-        logger.info(f"{logger.name} -> payload for job search: {payload}")
+        logger.info("%s -> payload for job search: %s", logger.name, payload)
 
         try:
             response = requests.post(
@@ -236,21 +240,19 @@ class CamundaService:
             )
 
             if response.ok:
-                logger.debug(f"{logger.name} -> {request_url} - {json.dumps(response.json(), indent=4)}")
+                logger.debug("%s -> %s - %s", logger.name, request_url, json.dumps(response.json(), indent=4))
                 jobs = response.json().get("items")
 
-                # TODO: move the jobs array length check logic to the application layer. This method should return the matching jobs array.
-                #       return the key for the first job retrieved as there will be one job of this type associated with the process instance 
                 if len(jobs) > 0:
                     return jobs[0].get("jobKey")
             else:
-                logger.error(f"{logger.name} -> Failed to search for job of type '{service_task_job_type}' for process instance '{process_instance_key}'. \
-                                Status Code: {response.status_code}. Response: {response.text}")
-        
+                logger.error("%s -> Failed to search for job of type '%s' for process instance '%s'. Status Code: %s. Response: %s",
+                             logger.name, service_task_job_type, process_instance_key, response.status_code, response.text)
+
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{request_url}' -> {str(exception)}")
-        except exception:
-            logger.error(f"{logger.name} -> Error '{request_url}' -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+
+        return ""
 
 
     def activate_jobs(self, service_task_job_type: str, timeout: int, max_jobs_to_activate: int) -> list:
@@ -286,34 +288,29 @@ class CamundaService:
                 headers=headers,
                 data=payload
             )
-            
+
             if response.ok:
-                logger.info(f"{logger.name} -> {request_url} - {json.dumps(response.json(), indent=4)}")
+                logger.info("%s -> %s - %s", logger.name, request_url, json.dumps(response.json(), indent=4))
 
                 return response.json().get("jobs")
             else:
-                logger.error(f"{logger.name} -> Failed to activate '{service_task_job_type}' jobs. Status Code: {response.status_code}. Response: {response.text}")
+                logger.error("%s -> Failed to activate '%s' jobs. Status Code: %s. Response: %s", logger.name, service_task_job_type, response.status_code, response.text)
 
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{request_url}' -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
 
 
-    def complete_job(self, job_key: str, animal: str) -> str:
+    def complete_job(self, job_key: str, variables: str) -> bool:
         """
-        Complete the job for the service task after retrieving the animal image url
+        Complete the job for the service task.
 
         Args:
             job_key (str): Key of the job handling the service task.
-            animal (str): Animal for which to retrieve image url.
+            variables (str): JSON string of variables to complete the job with.
 
         Returns:
-            str: Image url for the animal selected.
+            bool: True if the job was successfully marked as complete.
         """
-
-        # get an image url based for the animal
-        animal_service = AnimalService()
-        animal_image_url = animal_service.get_animal_url(animal=animal)
-        logger.info(f"{logger.name} -> Retrieved URL for animal image {animal}: {animal_image_url}")
 
         request_url = f"{self.base_url}/v2/jobs/{job_key}/completion"
 
@@ -324,7 +321,7 @@ class CamundaService:
         }
 
         payload = json.dumps({
-            "variables": { "animal_url": animal_image_url }
+            "variables": variables
         })
 
         try:
@@ -335,16 +332,64 @@ class CamundaService:
                 data=payload
             )
 
-            # if the job is successfully completed, return the animal image url
+            # if the job is successfully completed, return True
             if response.ok:
-                logger.info(f"{logger.name} -> Job completed: {job_key}")
+                logger.info("%s -> Job completed: %s", logger.name, job_key)
 
-                return animal_image_url
+                return True
             else:
-                logger.error(f"{logger.name} -> Failed to complete job '{job_key}'. Status Code: {response.status_code}. Response: {response.text}")
-        
+                logger.error("%s -> Failed to complete job '%s'. Status Code: %s. Response: %s", logger.name, job_key, response.status_code, response.text)
+
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{request_url}' -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+
+        return False
+
+
+    def fail_job(self, job_key:str, error_message: str) -> bool:
+        """
+        Fail the job for the service task.
+
+        Args:
+            job_key (str): The key of the job to fail.
+            error_message (str): An optional message describing why the job failed.
+
+        Returns:
+            bool: True if the job was successfully failed.
+        """
+
+        request_url = f"{self.base_url}/v2/jobs/{job_key}/failure"
+
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": f"Bearer {self.access_token}"
+        }
+
+        payload = json.dumps({
+            "errorMessage": f"Job {job_key} failed: {error_message}"
+        })
+
+        try:
+            # fail the job
+            response = requests.post(
+                url=request_url,
+                headers=headers,
+                data=payload
+            )
+
+            # if the job is successfully marked as failed , return True
+            if response.ok:
+                logger.info("%s -> Job failed: %s", logger.name, job_key)
+
+                return True
+            else:
+                logger.error("%s -> Failed to mark the job '%s' as failed. Status Code: %s. Response: %s", logger.name, job_key, response.status_code, response.text)
+
+        except requests.exceptions.RequestException as exception:
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+
+        return False
 
 
     def get_variable(self, process_instance_key: str, variable_name: str) -> str:
@@ -388,22 +433,23 @@ class CamundaService:
 
             if response.ok:
                 variables = response.json().get("items")
-                
-                logger.debug(f"{logger.name} -> {request_url} - {json.dumps(variables, indent=4)}")
 
-                # filtered_variables = [var for var in variables if var["name"] == variable_name ]
+                logger.debug("%s -> %s - %s", logger.name, request_url, json.dumps(variables, indent=4))
 
                 if len(variables) > 0:
 
                     variable_value = variables[0].get("value")
- 
-                    # if the variable value is returned as a variable in quotes, strip them out so that a literal is returned 
+
+                    # if the variable value is returned as a variable in quotes, strip them out so that a literal is returned
                     if variable_value.startswith("\"") and variable_value.endswith("\""):
                         variable_value = ast.literal_eval(variable_value)
 
                     return variable_value
             else:
-                logger.error(f"{logger.name} -> Failed to get variables for process instance '{process_instance_key}'. Status Code: {response.status_code}. Response: {response.text}")
-        
+                logger.error("%s -> Failed to get variables for process instance '%s'. Status Code: %s. Response: %s",
+                             logger.name, process_instance_key, response.status_code, response.text)
+
         except requests.exceptions.RequestException as exception:
-            logger.error(f"{logger.name} -> Failed to connect to '{request_url}' -> {str(exception)}")
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+
+        return ""
