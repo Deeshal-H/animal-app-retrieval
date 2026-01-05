@@ -1,4 +1,4 @@
-FROM python:3.14.2-slim
+FROM python:3.14.2-alpine
 WORKDIR /job_worker
 COPY ./job_worker .
 COPY ./service ./service

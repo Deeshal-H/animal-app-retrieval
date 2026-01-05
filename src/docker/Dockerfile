@@ -1,4 +1,4 @@
-FROM python:3.14.2-slim
+FROM python:3.14.2-alpine
 WORKDIR /app
 COPY --exclude=./job_worker / .
 RUN pip install -r requirements.txt
