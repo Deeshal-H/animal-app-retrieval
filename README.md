@@ -58,7 +58,7 @@ The environment variables file path must contain the following items:
 <img src="images/architecture.png" alt="Solution Architecture" height="600px" />
 <br/><br/>
 
-The `Animal Image Client` application is a web application built on Flask, the lightweight, minimalistic Python web framework. Additional, there is a also `Job Worker` application, also built on Python, which executes jobs associated with the service task in the [BPMN process](#bpmn_process). Both applications have been containerised for the purpose of running on a Kubernetes cluster. The `Job Worker` is deployed as a side container to the `Animal Image Client`. Internally, these applications makes requests to the `Orchestration Cluster REST API` to perform the automated actions.
+The `Animal Image Client` application is a web application built on Flask, the lightweight, minimalistic Python web framework. Additional, there is a also `Job Worker` application, also built on Python, which executes jobs associated with the service task in the [BPMN process](#bpmn_process). Both applications have been containerised for the purpose of running on a Kubernetes cluster. Internally, these applications makes requests to the `Orchestration Cluster REST API` to perform the automated actions.
 
 ### Sequence Diagram:
 ![Sequence Diagram](images/sequence_diagram.png)
