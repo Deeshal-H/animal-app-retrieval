@@ -6,7 +6,6 @@
         <zeebe:formDefinition formId="Form_1nfityj" />
         <zeebe:ioMapping>
           <zeebe:input source="=animal_url" target="animal_url" />
-          <zeebe:output source="=animal_url" target="animal_url" />
         </zeebe:ioMapping>
         <zeebe:userTask />
       </bpmn:extensionElements>
@@ -20,9 +19,6 @@
     <bpmn:serviceTask id="ServiceTask_RetrieveAnimalImage" name="Retrieve Animal Image">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="retrieve-animal-image" />
-        <zeebe:ioMapping>
-          <zeebe:input source="=animal" target="animal" />
-        </zeebe:ioMapping>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0z4ciap</bpmn:incoming>
       <bpmn:outgoing>Flow_1n076s2</bpmn:outgoing>

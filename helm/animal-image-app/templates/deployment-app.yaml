@@ -3,12 +3,13 @@ kind: Deployment
 metadata:
   name: {{ include "animal-image-app.fullname" . }}
   labels:
-    {{- include "animal-image-app.labels" . | nindent 4 }}
+    {{- include "animal-image-app.selectorLabels" . | nindent 4 }}
+    {{- include "animal-image-app.common-labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "animal-image-app.selectorLabels" . | nindent 6 }}
+        {{- include "animal-image-app.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -16,33 +17,19 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "animal-image-app.labels" . | nindent 8 }}
+      {{- include "animal-image-app.selectorLabels" . | nindent 8 }}
+      {{- include "animal-image-app.common-labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          {{- with .Values.securityContext }}
-          securityContext:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
-          env:
-          {{- include "helpers.list-env-variables" . | indent 12 }}
-      initContainers:  
-        - name: {{ .Values.jobWorker.name }}
-          image: "{{ .Values.jobWorker.image.repository }}:{{ .Values.jobWorker.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.jobWorker.pullPolicy }}
-          restartPolicy: Always
           env:
           {{- include "helpers.list-env-variables" . | indent 12 }}

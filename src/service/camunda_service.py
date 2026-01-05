@@ -298,6 +298,8 @@ class CamundaService:
 
         except requests.exceptions.RequestException as exception:
             logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+        
+        return []
 
 
     def complete_job(self, job_key: str, variables: str) -> bool:
@@ -378,13 +380,66 @@ class CamundaService:
                 data=payload
             )
 
-            # if the job is successfully marked as failed , return True
+            # if the job is successfully marked as failed, return True
             if response.ok:
                 logger.info("%s -> Job failed: %s", logger.name, job_key)
 
                 return True
             else:
                 logger.error("%s -> Failed to mark the job '%s' as failed. Status Code: %s. Response: %s", logger.name, job_key, response.status_code, response.text)
+
+        except requests.exceptions.RequestException as exception:
+            logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))
+
+        return False
+
+
+    def throw_error_job(self, job_key: str, error_code: str, error_message: str):
+        """
+        Throw a business error for the job.
+
+        Args:
+            job_key (str): The key of the job to throw an error for.
+            error_code (str): The error code that will be matched with an error catch event.
+            error_message (str): An error message that provides additional context.
+
+        Returns:
+            bool: True if the business error was successfully thrown.
+        """
+
+        request_url = f"{self.base_url}/v2/jobs/{job_key}/error"
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.access_token}"
+        }
+
+        payload = json.dumps({
+            "errorCode": error_code,
+            "errorMessage": f"Job {job_key} has thrown error: {error_message}",
+            "variables": {
+                "errorCode": error_code,
+                "errorMessage": f"Job {job_key} has thrown error: {error_message}"
+            }
+        })
+
+        logger.debug("payload: %s", payload)
+
+        try:
+            # throw a business error for the job
+            response = requests.post(
+                url=request_url,
+                headers=headers,
+                data=payload
+            )
+
+            # if the error is successfully thrown, return True
+            if response.ok:
+                logger.info("%s -> Error thrown for job: %s", logger.name, job_key)
+
+                return True
+            else:
+                logger.error("%s -> Failed to throw error for the job '%s'. Status Code: %s. Response: %s", logger.name, job_key, response.status_code, response.text)
 
         except requests.exceptions.RequestException as exception:
             logger.error("%s -> Failed to connect to '%s' -> %s", logger.name, request_url, str(exception))

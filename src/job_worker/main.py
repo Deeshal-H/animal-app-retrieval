@@ -39,8 +39,6 @@ access_token = ""
 
 def main(camunda_service: CamundaService):
 
-    logger.debug("Token -> %s", access_token)
-
     # Activate the jobs for the service task type
     # NOTE: Set the timeout period to a relatively high 60 seconds as the call that handles the job completion can take around
     #       45 seconds to complete depending on which animal is picked. The duck and fox REST services are slow
@@ -60,7 +58,17 @@ def main(camunda_service: CamundaService):
 
         # handle the job failure or completion
         if not animal_image_url:
-            camunda_service.fail_job(job_key=job_key, error_message=f"Failed to get animal image for {animal}.")
+            camunda_service.throw_error_job(
+                job_key=job_key,
+                error_code="1",
+                error_message=f"Failed to get animal image for {animal}."
+            )
+        elif animal_image_url.endswith(".mp4"):
+            camunda_service.throw_error_job(
+                job_key=job_key,
+                error_code="2",
+                error_message=f"Incorrect extension for {animal} in url {animal_image_url}."
+            )
         else:
             animal_image_url = camunda_service.complete_job(job_key, variables={ OUTPUT_ANIMAL_URL_VAR: animal_image_url })
 

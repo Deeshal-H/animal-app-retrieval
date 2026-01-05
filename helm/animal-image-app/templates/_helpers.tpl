@@ -33,9 +33,8 @@ Create chart name and version as used by the chart label.
 {{/*
 Common labels
 */}}
-{{- define "animal-image-app.labels" -}}
+{{- define "animal-image-app.common-labels" -}}
 helm.sh/chart: {{ include "animal-image-app.chart" . }}
-{{ include "animal-image-app.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -46,9 +45,15 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "animal-image-app.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "animal-image-app.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/name: {{ include "animal-image-app.name" . }}
 {{- end }}
+
+{{- define "job-worker.selectorLabels" -}}
+app.kubernetes.io/instance: {{ .Values.jobWorker.name }}
+app.kubernetes.io/name: {{ include "animal-image-app.name" . }}
+{{- end }}
+
 
 {{/*
 Create the name of the service account to use

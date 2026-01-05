@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.jobWorker.name }}
+  labels:
+    {{- include "job-worker.selectorLabels" . | nindent 4 }}
+    {{- include "animal-image-app.common-labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "job-worker.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "job-worker.selectorLabels" . | nindent 8 }}
+        {{- include "animal-image-app.common-labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      containers:  
+        - name: {{ .Values.jobWorker.name }}
+          image: "{{ .Values.jobWorker.image.repository }}:{{ .Values.jobWorker.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.jobWorker.image.pullPolicy }}
+          env:
+          {{- include "helpers.list-env-variables" . | indent 12 }}

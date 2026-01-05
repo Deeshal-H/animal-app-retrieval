@@ -3,7 +3,8 @@ kind: Service
 metadata:
   name: {{ include "animal-image-app.fullname" . }}
   labels:
-    {{- include "animal-image-app.labels" . | nindent 4 }}
+    {{- include "animal-image-app.selectorLabels" . | nindent 4 }}
+    {{- include "animal-image-app.common-labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
