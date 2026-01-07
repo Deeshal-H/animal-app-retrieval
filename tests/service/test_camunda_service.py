@@ -156,7 +156,7 @@ def test_get_cluster_topology_request_exception(mock_get, mock_logger, camunda_s
     result = camunda_service_client_with_token.get_cluster_topology()
 
     # Assert
-    assert result is None
+    assert result is False
     mock_logger.error.assert_called_once()
     assert "Failed to connect" in mock_logger.error.call_args[0][0]
 
@@ -215,5 +215,5 @@ def test_deploy_resources_response_exception(mock_post, mock_logger, camunda_ser
     result = camunda_service_client_with_token.deploy_resources(resource_paths=resource_paths)
 
     # Assert
-    assert result is None
+    assert result == ""
     assert "Failed to deploy resources" in mock_logger.error.call_args[0][0]
